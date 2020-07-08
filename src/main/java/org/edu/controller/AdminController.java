@@ -198,11 +198,17 @@ public class AdminController {
 	 * @throws Exception 
 	 */
 	@RequestMapping(value = "/admin/member/list", method = RequestMethod.GET)
-	public String memberList(Locale locale, Model model) throws Exception {
-		List<MemberVO> list = memberService.selectMember();
+	public String memberList(@ModelAttribute("pageVO") PageVO pageVO, Locale locale, Model model) throws Exception {
+		if(pageVO.getPage() == null) {
+			pageVO.setPage(1);
+		}
+		pageVO.setPerPageNum(10);
+		pageVO.setTotalCount(memberService.countUserId(pageVO));
+		List<MemberVO> list = memberService.selectMember(pageVO);
 		//모델클래스로 jsp화면으로 memberService에서 셀렉트한 list값을 memberList변수명으로 보낸다.
 		//model { list -> memberList -> jsp }
 		model.addAttribute("memberList", list);
+		model.addAttribute("pageVO", pageVO);
 		return "admin/member/member_list";
 	}
 	
@@ -211,9 +217,10 @@ public class AdminController {
 	 * @throws Exception 
 	 */
 	@RequestMapping(value = "/admin/member/view", method = RequestMethod.GET)
-	public String memberView(@RequestParam("user_id") String user_id, Locale locale, Model model) throws Exception {
+	public String memberView(@ModelAttribute("pageVO") PageVO pageVO, @RequestParam("user_id") String user_id, Locale locale, Model model) throws Exception {
 		MemberVO memberVO = memberService.viewMember(user_id);
-		model.addAttribute("memberVO", memberVO);
+		model.addAttribute("memberVO", memberVO);;
+		model.addAttribute("pageVO", pageVO);
 		return "admin/member/member_view";
 	}
 	
@@ -238,16 +245,17 @@ public class AdminController {
 	 * @throws Exception 
 	 */
 	@RequestMapping(value = "/admin/member/update", method = RequestMethod.GET)
-	public String memberUpdate(@RequestParam("user_id") String user_id, Locale locale, Model model) throws Exception {
+	public String memberUpdate(@ModelAttribute("pageVO") PageVO pageVO, @RequestParam("user_id") String user_id, Locale locale, Model model) throws Exception {
 		MemberVO memberVO = memberService.viewMember(user_id);
+		model.addAttribute("pageVO", pageVO);
 		model.addAttribute("memberVO", memberVO);
 		return "admin/member/member_update";
 	}
 	@RequestMapping(value = "/admin/member/update", method = RequestMethod.POST)
-	public String memberUpdate(MemberVO memberVO, Locale locale, RedirectAttributes rdat) throws Exception {
+	public String memberUpdate(@ModelAttribute("pageVO") PageVO pageVO, MemberVO memberVO, Locale locale, RedirectAttributes rdat) throws Exception {
 		memberService.updateMember(memberVO);
 		rdat.addFlashAttribute("msg", "수정");
-		return "redirect:/admin/member/view?user_id=" + memberVO.getUser_id();
+		return "redirect:/admin/member/view?user_id=" + memberVO.getUser_id() + "&page=" + pageVO.getPage();
 	}
 	
 	/**
